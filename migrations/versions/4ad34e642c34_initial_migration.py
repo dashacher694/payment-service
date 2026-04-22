@@ -25,6 +25,8 @@ def upgrade() -> None:
     sa.Column('event_type', sa.String(length=50), nullable=False),
     sa.Column('data', sa.JSON(), nullable=False),
     sa.Column('send_status', sa.Boolean(), nullable=False),
+    sa.Column('is_validation', sa.Boolean(), nullable=False),
+    sa.Column('service_source', sa.String(length=50), nullable=False),
     sa.Column('processed_at', sa.DateTime(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id')
@@ -32,7 +34,7 @@ def upgrade() -> None:
     op.create_table('payments',
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('amount', sa.Numeric(precision=10, scale=2), nullable=False),
-    sa.Column('currency', sa.String(length=3), nullable=False),
+    sa.Column('currency', sa.String(length=50), nullable=False),
     sa.Column('description', sa.String(length=500), nullable=False),
     sa.Column('meta', sa.JSON(), nullable=False),
     sa.Column('webhook_url', sa.String(length=500), nullable=False),

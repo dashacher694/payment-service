@@ -14,7 +14,7 @@ class PaymentEntity(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     amount: Mapped[Decimal] = mapped_column(sa.Numeric(10, 2), nullable=False)
-    currency: Mapped[str] = mapped_column(sa.String(3), nullable=False)
+    currency: Mapped[str] = mapped_column(sa.String(50), nullable=False)
     description: Mapped[str] = mapped_column(sa.String(500), nullable=False)
     meta: Mapped[dict] = mapped_column(sa.JSON, nullable=False, default=dict)
     webhook_url: Mapped[str] = mapped_column(sa.String(500), nullable=False)

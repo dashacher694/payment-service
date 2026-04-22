@@ -9,7 +9,7 @@ from src.modules.utils.enums import PaymentStatus, Currency
 @dataclass
 class Payment:
     amount: Decimal
-    currency: Currency
+    currency: str
     description: str
     meta: dict
     webhook_url: str

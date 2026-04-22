@@ -9,4 +9,4 @@ from src.modules.outbox.usecase.process_outbox.api import process_outbox
 
 def add_routes(app: FastAPI):
     app.include_router(payment_router)
-    app.include_router(outbox_router)
+    app.include_router(outbox_router, prefix="/internal/scheduler")

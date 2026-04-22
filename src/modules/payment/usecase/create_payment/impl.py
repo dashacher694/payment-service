@@ -43,7 +43,7 @@ class CreatePaymentUseCase:
         outbox_data = OutboxEventData(
             payment_id=str(payment.id),
             amount=str(payment.amount),
-            currency=payment.currency.value,
+            currency=str(payment.currency),
             webhook_url=payment.webhook_url,
         )
         
