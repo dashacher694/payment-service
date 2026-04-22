@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+
 from loguru import logger
 
 from src.clients.producer.payment_dto import PaymentCreatedDTO

@@ -6,7 +6,6 @@ import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.db.base import Base
-from src.modules.utils.enums import Currency, PaymentStatus
 
 
 class PaymentEntity(Base):

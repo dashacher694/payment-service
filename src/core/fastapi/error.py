@@ -1,8 +1,8 @@
-from fastapi import status, Request, FastAPI
+from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from starlette.responses import JSONResponse
 
-from src.modules.utils.erorr import NotFoundError, BadRequestError
+from src.modules.utils.erorr import BadRequestError, NotFoundError
 
 
 def init_error_handler(app: FastAPI, admin_email: str):

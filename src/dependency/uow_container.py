@@ -1,11 +1,11 @@
 from dependency_injector.containers import DeclarativeContainer
 from dependency_injector.providers import Factory, Singleton
 
+from src.adapters.rabbitmq.client import RabbitMQClient
 from src.core.config import settings
 from src.db.connection import get_engine
-from src.adapters.rabbitmq.client import RabbitMQClient
-from src.modules.payment.infrastructure.uow import PaymentUnitOfWork
 from src.modules.outbox.infrastructure.uow import OutboxUnitOfWork
+from src.modules.payment.infrastructure.uow import PaymentUnitOfWork
 
 
 class UowContainer(DeclarativeContainer):

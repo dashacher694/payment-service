@@ -2,7 +2,6 @@ from sqlalchemy import select
 
 from src.db.base_repository import BaseAsyncRepository
 from src.modules.outbox.domain.aggregate.model import Outbox
-from src.modules.outbox.infrastructure.entity import OutboxEntity
 
 
 class OutboxRepository(BaseAsyncRepository[Outbox]):

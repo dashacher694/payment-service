@@ -2,7 +2,7 @@ import asyncio
 from contextlib import asynccontextmanager
 
 from faststream import FastStream
-from faststream.rabbit import RabbitBroker, RabbitExchange, RabbitQueue, ExchangeType
+from faststream.rabbit import ExchangeType, RabbitBroker, RabbitExchange, RabbitQueue
 from loguru import logger
 from sqlalchemy.orm import clear_mappers
 

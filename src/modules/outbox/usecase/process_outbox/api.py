@@ -4,8 +4,8 @@ from fastapi import Depends, status
 from src.core.fastapi.security import verify_api_key
 from src.dependency.container import Container
 from src.modules.outbox.infrastructure.dto import SchedulerOutboxResponse
-from src.modules.outbox.usecase.process_outbox.impl import ProcessOutboxUseCase
 from src.modules.outbox.usecase import router
+from src.modules.outbox.usecase.process_outbox.impl import ProcessOutboxUseCase
 
 
 @router.post(

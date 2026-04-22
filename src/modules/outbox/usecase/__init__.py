@@ -1,3 +1,3 @@
 from fastapi import APIRouter
 
-router = APIRouter(prefix="/outbox", tags=["outbox"])
+router = APIRouter(prefix="/outbox", tags=["Outbox"])

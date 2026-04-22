@@ -1,9 +1,8 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from pydantic import BaseModel, Field
 
-from src.modules.utils.enums import Currency, PaymentStatus
+from pydantic import BaseModel, Field
 
 
 class CreatePaymentRequest(BaseModel):

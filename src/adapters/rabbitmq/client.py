@@ -1,5 +1,5 @@
 import orjson
-from aio_pika import connect_robust, ExchangeType
+from aio_pika import ExchangeType, connect_robust
 from loguru import logger
 
 from src.core.config import settings
@@ -36,7 +36,7 @@ class RabbitMQClient:
         if not self.exchange:
             await self.connect()
 
-        from aio_pika import Message, DeliveryMode
+        from aio_pika import DeliveryMode, Message
 
         msg = Message(
             body=orjson.dumps(message),

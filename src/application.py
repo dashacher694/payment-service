@@ -8,12 +8,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
+from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.orm import clear_mappers
 
-from src.core.config import settings
-from src.core.fastapi.routes import add_routes
-from src.core.fastapi.mapper import start_mapper
 from src.core.fastapi.error import init_error_handler
+from src.core.fastapi.mapper import start_mapper
+from src.core.fastapi.routes import add_routes
 from src.dependency.container import Container
 
 
@@ -37,12 +37,14 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    container = Container()
+    container.wire()
+
     add_routes(app)
 
     init_error_handler(app, "admin@example.com")
 
-    container = Container()
-    container.wire()
+    Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 
     @app.on_event("startup")
     async def on_startup():

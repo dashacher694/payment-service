@@ -66,6 +66,9 @@ docker-compose logs -f consumer
 Сервисы будут доступны:
 - API: http://localhost:8020
 - Swagger UI: http://localhost:8020/internal/api/payment-service/docs
+- Prometheus Metrics: http://localhost:8020/metrics
+- Healthcheck: http://localhost:8020/health
+- Readiness: http://localhost:8020/ready
 - RabbitMQ Management: http://localhost:15672 (guest/guest)
 - PostgreSQL: localhost:5432
 
@@ -164,6 +167,33 @@ curl -X POST http://localhost:8020/internal/scheduler/outbox/process \
 
 **Важно:** URL webhook должен включать протокол (`http://` или `https://`).
 
+## Тестирование
+
+```bash
+# Запуск всех тестов с покрытием
+poetry run pytest
+
+# Только unit тесты
+poetry run pytest -m unit
+
+# HTML отчет по покрытию
+poetry run pytest --cov-report=html
+```
+
+**Coverage:** 70% | **Тестов:** 8 (7 unit, 1 integration)
+
+## Качество кода
+
+```bash
+# Линтинг и автофикс
+poetry run ruff check src/ --fix
+
+# Проверка типов
+poetry run mypy src/
+```
+
+
+
 ## Особенности реализации
 
 - **DDD Architecture** - разделение на Domain, Application, Infrastructure слои
@@ -173,6 +203,8 @@ curl -X POST http://localhost:8020/internal/scheduler/outbox/process \
 - **Idempotency** - защита от дублей через Idempotency-Key заголовок
 - **Retry & DLQ** - 3 попытки с экспоненциальной задержкой, DLQ для неудачных сообщений
 - **API Key Authentication** - FastAPI Security с X-API-Key заголовком
+- **Healthchecks** - /health и /ready эндпоинты для мониторинга
+- **Prometheus Metrics** - метрики HTTP запросов, latency, ошибок
 
 ## Переменные окружения
 

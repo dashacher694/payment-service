@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 
-from src.modules.utils.enums import PaymentStatus, Currency
+from src.modules.utils.enums import PaymentStatus
 
 
 @dataclass

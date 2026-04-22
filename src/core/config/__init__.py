@@ -1,12 +1,13 @@
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv()
 
+from src.core.config.api import APISettings
 from src.core.config.database import DatabaseSettings
 from src.core.config.rabbitmq import RabbitMQSettings
 from src.core.config.server import ServerSettings
-from src.core.config.api import APISettings
 
 
 class ApplicationSettings:
