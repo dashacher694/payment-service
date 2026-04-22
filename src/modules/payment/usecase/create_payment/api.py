@@ -17,7 +17,7 @@ from src.modules.payment.usecase.create_payment.impl import CreatePaymentUseCase
 @inject
 async def create_payment(
     request: CreatePaymentRequest,
-    idempotency_key: str = Header(..., alias="Idempotency-Key", description="Ключ идемпотентности"),
+    idempotency_key: str = Header(..., alias="Idempotency_Key", description="Ключ идемпотентности"),
     uc: CreatePaymentUseCase = Depends(Provide[Container.create_payment_use_case]),
 ):
     """

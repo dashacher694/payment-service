@@ -6,6 +6,7 @@ from uuid import UUID
 @dataclass
 class Outbox:
     payment_id: UUID
+    event_type: str
     data: dict
     send_status: bool
     is_validation: bool

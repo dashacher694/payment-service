@@ -24,6 +24,9 @@ def create_app() -> FastAPI:
         title="Payment Service",
         description="Асинхронный сервис процессинга платежей",
         version="1.0.0",
+        docs_url="/internal/api/payment-service/docs",
+        redoc_url="/internal/api/payment-service/redoc",
+        openapi_url="/internal/api/payment-service/openapi.json",
     )
 
     app.add_middleware(

@@ -23,7 +23,7 @@ class CreatePaymentUseCase:
         if existing:
             return CreatePaymentResponse(
                 payment_id=existing.id,
-                status=existing.status,
+                status=str(existing.status),
                 created_at=existing.created_at,
             )
 
@@ -49,6 +49,7 @@ class CreatePaymentUseCase:
         
         outbox = Outbox(
             payment_id=payment.id,
+            event_type="payment.created",
             data=outbox_data.model_dump(),
             send_status=False,
             is_validation=True,
@@ -61,6 +62,6 @@ class CreatePaymentUseCase:
 
         return CreatePaymentResponse(
             payment_id=payment.id,
-            status=payment.status,
+            status=str(payment.status),
             created_at=payment.created_at,
         )
