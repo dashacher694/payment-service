@@ -21,7 +21,7 @@
 - Python 3.11+
 - FastAPI + Pydantic 2
 - PostgreSQL + SQLAlchemy 2.0 (async)
-- RabbitMQ + aio-pika
+- RabbitMQ + FastStream
 - Alembic (миграции)
 - Docker & Docker Compose
 - httpx (webhook клиент)
@@ -32,54 +32,19 @@
 ```
 payment-service/
 ├── src/
-│   ├── application.py              # Конфигурация FastAPI app
-│   ├── consumer.py                 # RabbitMQ consumer
+│   ├── application.py              # FastAPI app
+│   ├── consumer.py                 # FastStream consumer
 │   ├── main.py                     # Точка входа
-│   ├── core/                       # Ядро приложения
-│   │   ├── config.py               # Конфигурация (Settings)
-│   │   ├── errors.py               # Кастомные исключения
-│   │   └── fastapi/
-│   │       ├── error.py            # Error handlers
-│   │       ├── mapper.py           # Агрегация всех мапперов
-│   │       └── routes.py           # Routes
-│   ├── db/                         # База данных
-│   │   ├── base.py                 # mapper_registry и metadata
-│   │   ├── connection.py           # Подключение к БД
-│   │   └── transaction.py          # Декоратор @async_transactional
-│   ├── adapters/                   # Внешние адаптеры
-│   │   └── rabbitmq/
-│   │       └── client.py           # RabbitMQ клиент
-│   ├── clients/                    # Централизованные клиенты
-│   │   └── producer/
-│   │       └── rabbitmq_producer.py # RabbitMQ продюсер
+│   ├── core/                       # Конфигурация и общие компоненты
+│   ├── db/                         # База данных и транзакции
+│   ├── adapters/                   # RabbitMQ клиент
 │   └── modules/
-│       └── payment/                # Модуль платежей
-│           ├── domain/             # Доменная логика
-│           │   ├── enums/          # Enum'ы
-│           │   │   ├── payment_status.py
-│           │   │   └── currency.py
-│           │   └── aggregate/
-│           │       └── model.py    # Domain модель
-│           ├── infrastructure/     # Инфраструктура модуля
-│           │   ├── dto.py          # Pydantic DTO
-│           │   ├── mapper.py       # Маппинг Domain → Table
-│           │   ├── repository.py   # Repository
-│           │   └── uow.py          # Unit of Work
-│           └── usecase/           # Use Cases
-│               ├── __init__.py     # Router
-│               ├── create_payment/
-│               │   ├── impl.py     # Use Case логика
-│               │   └── api.py      # Endpoint
-│               └── get_payment/
-│                   ├── impl.py     # Use Case логика
-│                   └── api.py      # Endpoint
+│       ├── payment/                # Модуль платежей (Domain, Infrastructure, UseCase)
+│       └── outbox/                 # Модуль Outbox pattern
 ├── migrations/                     # Alembic миграции
-│   ├── env.py
-│   └── script.py.mako
-├── docker-compose.yaml             # PostgreSQL + RabbitMQ + API + Consumer
+├── docker-compose.yaml
 ├── Dockerfile
-├── pyproject.toml
-└── README.md
+└── pyproject.toml
 ```
 
 ## Запуск
@@ -99,7 +64,8 @@ docker-compose logs -f consumer
 ```
 
 Сервисы будут доступны:
-- API: http://localhost:8000
+- API: http://localhost:8020
+- Swagger UI: http://localhost:8020/internal/api/payment-service/docs
 - RabbitMQ Management: http://localhost:15672 (guest/guest)
 - PostgreSQL: localhost:5432
 
@@ -116,7 +82,7 @@ docker-compose up -d postgres rabbitmq
 alembic upgrade head
 
 # Запуск API
-poetry run uvicorn src.main:app --reload --port 8000
+poetry run uvicorn src.main:app --reload --port 8020
 
 # Запуск Consumer (в отдельном терминале)
 poetry run python src/consumer.py
@@ -124,18 +90,23 @@ poetry run python src/consumer.py
 
 ## Использование API
 
+### Аутентификация
+
+Все API эндпоинты требуют API ключ в заголовке `X-API-Key`. Swagger UI имеет кнопку "Authorize" для ввода ключа.
+
 ### Создание платежа
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/payments \
+curl -X POST http://localhost:8020/api/v1/payments \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: secret-api-key-12345" \
   -H "Idempotency-Key: unique-key-123" \
   -d '{
     "amount": "1000.50",
     "currency": "RUB",
     "description": "Оплата заказа #12345",
     "metadata": {"order_id": "12345", "customer_id": "67890"},
-    "webhook_url": "https://webhook.site/your-unique-url"
+    "webhookUrl": "https://webhook.site/your-unique-url"
   }'
 ```
 
@@ -151,7 +122,8 @@ curl -X POST http://localhost:8000/api/v1/payments \
 ### Получение информации о платеже
 
 ```bash
-curl -X GET http://localhost:8000/api/v1/payments/550e8400-e29b-41d4-a716-446655440000
+curl -X GET http://localhost:8020/api/v1/payments/550e8400-e29b-41d4-a716-446655440000 \
+  -H "X-API-Key: secret-api-key-12345"
 ```
 
 Ответ:
@@ -169,63 +141,38 @@ curl -X GET http://localhost:8000/api/v1/payments/550e8400-e29b-41d4-a716-446655
 }
 ```
 
-### Health Check
+### Обработка Outbox событий
 
 ```bash
-curl http://localhost:8000/health
-```
-
-Ответ:
-```json
-{
-  "status": "healthy"
-}
+curl -X POST http://localhost:8020/internal/scheduler/outbox/process \
+  -H "X-API-Key: secret-api-key-12345"
 ```
 
 ## Webhook уведомления
 
-После обработки платежа сервис отправит POST запрос на указанный `webhook_url`:
+После обработки платежа сервис отправит POST запрос на указанный `webhookUrl`:
 
 ```json
 {
   "payment_id": "550e8400-e29b-41d4-a716-446655440000",
-  "status": "succeeded",
   "amount": "1000.50",
   "currency": "RUB",
-  "processed_at": "2026-04-22T08:00:05Z"
+  "status": "succeeded",
+  "created_at": "2026-04-22T08:00:00.000000"
 }
 ```
 
+**Важно:** URL webhook должен включать протокол (`http://` или `https://`).
+
 ## Особенности реализации
 
-### DDD Architecture
-- **Domain Layer** - доменные модели (Payment) и value objects (PaymentStatus, Currency)
-- **Application Layer** - Use Cases с декоратором @async_transactional
-- **Infrastructure Layer** - Repository, Mapper, Unit of Work
-
-### Mapper Pattern
-- Маппинг доменных моделей на таблицы через SQLAlchemy mapper_registry
-- Маппинг инициализируется при старте приложения (start_mapper)
-- Repository работает напрямую с доменными моделями через mapper
-
-### Unit of Work
-- Управление транзакциями через UoW
-- Декоратор @async_transactional автоматически открывает/закрывает транзакции
-- Поддержка read-only транзакций
-
-### Idempotency
-- Заголовок `Idempotency-Key` обязателен для создания платежа
-- Повторные запросы с тем же ключом возвращают существующий платеж
-
-### Retry & Dead Letter Queue
-- 3 попытки обработки с экспоненциальной задержкой (1s, 2s, 4s)
-- После 3 неудачных попыток сообщение попадает в DLQ
-- DLQ можно мониторить через RabbitMQ Management UI
-
-### Error Handling
-- Кастомные исключения (NotFoundError, BadRequestError)
-- Централизованные error handlers в src/core/fastapi/error.py
-- Стандартизированный формат ответов об ошибках
+- **DDD Architecture** - разделение на Domain, Application, Infrastructure слои
+- **Mapper Pattern** - маппинг доменных моделей через SQLAlchemy mapper_registry
+- **Unit of Work** - управление транзакциями через декоратор @async_transactional
+- **Outbox Pattern** - гарантированная доставка событий в RabbitMQ
+- **Idempotency** - защита от дублей через Idempotency-Key заголовок
+- **Retry & DLQ** - 3 попытки с экспоненциальной задержкой, DLQ для неудачных сообщений
+- **API Key Authentication** - FastAPI Security с X-API-Key заголовком
 
 ## Переменные окружения
 
@@ -235,7 +182,7 @@ curl http://localhost:8000/health
 | `RABBITMQ_URL` | RabbitMQ connection string | `amqp://guest:guest@localhost:5672/` |
 | `API_KEY` | API ключ для аутентификации | **Обязательный параметр** |
 | `SERVER_HOST` | Хост API | `0.0.0.0` |
-| `SERVER_PORT` | Порт API | `8000` |
+| `SERVER_PORT` | Порт API | `8020` |
 | `LOG_LEVEL` | Уровень логирования | `INFO` |
 
 ## Мониторинг
@@ -259,7 +206,3 @@ docker-compose down
 # С удалением volumes (БД)
 docker-compose down -v
 ```
-
----
-
-© 2026 Payment Service.
