@@ -1,6 +1,7 @@
 from dependency_injector.wiring import Provide, inject
 from fastapi import Depends, status
 
+from src.core.fastapi.security import verify_api_key
 from src.dependency.container import Container
 from src.modules.outbox.infrastructure.dto import SchedulerOutboxResponse
 from src.modules.outbox.usecase.process_outbox.impl import ProcessOutboxUseCase
@@ -13,6 +14,7 @@ from src.modules.outbox.usecase import router
     summary="Обработка outbox событий",
     status_code=status.HTTP_200_OK,
     response_model=SchedulerOutboxResponse,
+    dependencies=[Depends(verify_api_key)],
 )
 @inject
 async def process_outbox(
@@ -20,9 +22,9 @@ async def process_outbox(
 ):
     """
     Обработка unsent событий из outbox
-    
+
     Отправляет несохраненные события в RabbitMQ.
     """
     result = await uc.invoke()
-    
+
     return result

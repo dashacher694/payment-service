@@ -233,6 +233,7 @@ curl http://localhost:8000/health
 |-----------|----------|----------------------|
 | `DATABASE_URL` | PostgreSQL connection string | `postgresql+asyncpg://payment:payment@localhost:5432/payment_db` |
 | `RABBITMQ_URL` | RabbitMQ connection string | `amqp://guest:guest@localhost:5672/` |
+| `API_KEY` | API ключ для аутентификации | **Обязательный параметр** |
 | `SERVER_HOST` | Хост API | `0.0.0.0` |
 | `SERVER_PORT` | Порт API | `8000` |
 | `LOG_LEVEL` | Уровень логирования | `INFO` |

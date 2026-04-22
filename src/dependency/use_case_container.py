@@ -5,6 +5,7 @@ from src.dependency.uow_container import UowContainer
 from src.clients.producer.rabbitmq_producer import RabbitMQBrokerProducer
 from src.modules.payment.usecase.create_payment.impl import CreatePaymentUseCase
 from src.modules.payment.usecase.get_payment.impl import GetPaymentUseCase
+from src.modules.payment.usecase.process_payment_consumer.impl import ProcessPaymentConsumerUseCase
 from src.modules.outbox.usecase.process_outbox.impl import ProcessOutboxUseCase
 
 
@@ -29,4 +30,9 @@ class UseCaseContainer(UowContainer):
         ProcessOutboxUseCase,
         rabbitmq_producer=rabbitmq_broker_producer,
         uow=UowContainer.outbox_uow,
+    )
+
+    process_payment_consumer_use_case = Factory(
+        ProcessPaymentConsumerUseCase,
+        uow=UowContainer.payment_uow,
     )
