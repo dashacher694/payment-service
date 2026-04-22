@@ -2,7 +2,7 @@ import asyncio
 from contextlib import asynccontextmanager
 
 from faststream import FastStream
-from faststream.rabbit import RabbitBroker
+from faststream.rabbit import RabbitBroker, RabbitExchange, RabbitQueue, ExchangeType
 from loguru import logger
 from sqlalchemy.orm import clear_mappers
 
@@ -32,7 +32,19 @@ def create_consumer() -> FastStream:
         await engine.dispose()
         logger.info("Consumer stopped")
 
-    @broker.subscriber("payments.new")
+    main_queue = RabbitQueue(
+        "payments.new",
+        durable=True,
+        routing_key="payment.created",
+        arguments={
+            "x-dead-letter-exchange": "payments",
+            "x-dead-letter-routing-key": "payment.dlq",
+        }
+    )
+
+    exchange = RabbitExchange("payments", durable=True, type=ExchangeType.TOPIC)
+
+    @broker.subscriber(main_queue, exchange, retry=3)
     async def process_payment_handler(body: dict):
         container = Container()
         use_case = container.process_payment_consumer_use_case()

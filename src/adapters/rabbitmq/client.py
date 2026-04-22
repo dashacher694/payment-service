@@ -22,8 +22,7 @@ class RabbitMQClient:
             ExchangeType.TOPIC,
             durable=True,
         )
-        self.queue = await self.channel.declare_queue("payments.new")
-        await self.queue.bind(self.exchange, routing_key="payment.created")
+
         logger.info("RabbitMQ client connected")
 
     async def disconnect(self):
